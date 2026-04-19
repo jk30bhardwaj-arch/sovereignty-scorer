@@ -1,1 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EU Cloud Sovereignty Scorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --surface: #111827;
+    --surface2: #1a2236;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --eu-blue: #003399;
+    --eu-gold: #FFCC00;
+    --accent: #4f7eff;
+    --accent-dim: rgba(79,126,255,0.12);
+    --text: #f0f2f8;
+    --muted: #8b95b0;
+    --dim: #4a5168;
+    --seal0: #E24B4A; --seal0-bg: rgba(226,75,74,0.12);
+    --seal1: #E09000; --seal1-bg: rgba(224,144,0,0.12);
+    --seal2: #EFB827; --seal2-bg: rgba(239,184,39,0.12);
+    --seal3: #34c98a; --seal3-bg: rgba(52,201,138,0.12);
+    --seal4: #4f7eff; --seal4-bg: rgba(79,126,255,0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px; background: var(--surface);
+  }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .eu-flag {
+    width: 32px; height: 22px; background: var(--eu-blue);
+    border-radius: 3px; display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: var(--eu-gold);
+  }
+  .logo-text { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 15px; letter-spacing: -0.02em; }
+  .logo-sub { font-size: 11px; color: var(--muted); font-weight: 300; margin-top: 1px; }
+  .header-badge {
+    font-size: 11px; color: var(--accent); background: var(--accent-dim);
+    padding: 4px 10px; border-radius: 99px; border: 1px solid rgba(79,126,255,0.2);
+    font-family: 'DM Mono', monospace;
+  }
+
+  main { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  .hero { text-align: center; margin-bottom: 40px; }
+  .hero h1 {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: clamp(28px, 5vw, 42px);
+    letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 12px;
+    background: linear-gradient(135deg, #f0f2f8 0%, #8b95b0 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .hero p { font-size: 15px; color: var(--muted); max-width: 520px; margin: 0 auto 28px; line-height: 1.6; font-weight: 300; }
+
+  .search-wrap {
+    display: flex; gap: 10px; max-width: 580px; margin: 0 auto;
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 6px 6px 6px 18px;
+    transition: border-color 0.2s;
+  }
+  .search-wrap:focus-within { border-color: var(--accent); }
+  .search-wrap input {
+    flex: 1; background: none; border: none; outline: none;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text);
+  }
+  .search-wrap input::placeholder { color: var(--dim); }
+  .search-wrap button {
+    background: var(--accent); color: #fff; border: none; cursor: pointer;
+    font-family: 'Syne', sans-serif; font-weight: 600; font-size: 13px;
+    padding: 10px 20px; border-radius: 8px; white-space: nowrap;
+    transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.01em;
+  }
+  .search-wrap button:hover { opacity: 0.88; }
+  .search-wrap button:active { transform: scale(0.97); }
+  .search-wrap button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .suggestions { display: flex; gap: 8px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+  .suggestion {
+    font-size: 12px; color: var(--muted); background: var(--surface);
+    border: 1px solid var(--border); padding: 4px 12px; border-radius: 99px;
+    cursor: pointer; transition: border-color 0.15s, color 0.15s;
+  }
+  .suggestion:hover { border-color: var(--accent); color: var(--accent); }
+
+  .disclaimer {
+    max-width: 580px; margin: 14px auto 0;
+    background: var(--accent-dim); border: 1px solid rgba(79,126,255,0.15);
+    border-radius: var(--radius-sm); padding: 10px 14px;
+    font-size: 12px; color: var(--muted); line-height: 1.5; font-weight: 300;
+  }
+
+  #loading { display: none; text-align: center; padding: 48px 0; }
+  .spinner {
+    width: 36px; height: 36px; border: 2px solid var(--border2);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.7s linear infinite; margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-label { font-size: 13px; color: var(--muted); font-weight: 300; }
+  .loading-steps { display: flex; flex-direction: column; gap: 6px; align-items: center; margin-top: 12px; }
+  .loading-step { font-size: 12px; color: var(--dim); font-family: 'DM Mono', monospace; }
+  .loading-step.active { color: var(--accent); }
+
+  #error-box {
+    display: none; background: rgba(226,75,74,0.1); border: 1px solid rgba(226,75,74,0.3);
+    border-radius: var(--radius); padding: 14px 18px; font-size: 13px; color: #E24B4A;
+    text-align: center; margin-top: 24px;
+  }
+
+  #results { display: none; animation: fadeUp 0.4s ease; }
+  @keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
+
+  .vendor-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+  }
+  .vendor-name { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .vendor-sub { font-size: 13px; color: var(--muted); margin-top: 2px; font-weight: 300; }
+  .eligible-badge {
+    font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: 99px;
+    font-family: 'DM Mono', monospace; letter-spacing: 0.02em;
+  }
+  .eligible-yes { background: rgba(52,201,138,0.12); color: #34c98a; border: 1px solid rgba(52,201,138,0.25); }
+  .eligible-no  { background: rgba(226,75,74,0.12);  color: #E24B4A;  border: 1px solid rgba(226,75,74,0.25); }
+
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .metric {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px;
+  }
+  .metric-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; font-weight: 500; }
+  .metric-val { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.03em; }
+  .score-good { color: #34c98a; }
+  .score-mid  { color: #EFB827; }
+  .score-low  { color: #E24B4A; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden; margin-bottom: 16px;
+  }
+  .card-header {
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+    font-size: 11px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.06em; font-weight: 500; display: flex; gap: 20px;
+  }
+  .sov-row {
+    padding: 14px 20px; border-bottom: 1px solid var(--border); transition: background 0.15s;
+  }
+  .sov-row:last-child { border-bottom: none; }
+  .sov-row:hover { background: var(--surface2); }
+  .sov-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .sov-id { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--dim); min-width: 44px; }
+  .sov-name { font-size: 13px; font-weight: 500; flex: 1; min-width: 140px; }
+  .sov-weight { font-size: 11px; color: var(--dim); font-family: 'DM Mono', monospace; min-width: 32px; text-align: right; }
+  .seal-pill {
+    font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 99px;
+    font-family: 'DM Mono', monospace; white-space: nowrap;
+  }
+  .bar-track { flex: 1; height: 5px; background: rgba(255,255,255,0.06); border-radius: 99px; min-width: 80px; }
+  .bar-fill { height: 5px; border-radius: 99px; transition: width 0.8s cubic-bezier(0.16,1,0.3,1); }
+  .sov-pct { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--muted); min-width: 36px; text-align: right; }
+  .sov-reasoning { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.55; padding-left: 56px; font-weight: 300; }
+
+  .summary-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin-bottom: 16px;
+  }
+  .summary-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; margin-bottom: 10px; }
+  .summary-text { font-size: 14px; color: var(--muted); line-height: 1.7; font-weight: 300; }
+
+  .reset-btn {
+    display: block; margin: 0 auto; background: none; border: 1px solid var(--border2);
+    color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 13px;
+    padding: 9px 20px; border-radius: 8px; cursor: pointer; transition: border-color 0.15s, color 0.15s;
+  }
+  .reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  footer {
+    text-align: center; margin-top: 48px; padding-top: 24px;
+    border-top: 1px solid var(--border); font-size: 12px; color: var(--dim);
+    font-weight: 300; line-height: 1.6;
+  }
+
+  @media (max-width: 600px) {
+    main { padding: 28px 16px 60px; }
+    header { padding: 0 16px; }
+    .sov-reasoning { padding-left: 0; margin-top: 10px; }
+    .card-header { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="eu-flag">★</div>
+    <div>
+      <div class="logo-text">EU Sovereignty Scorer</div>
+      <div class="logo-sub">Cloud Sovereignty Framework v1.2.1</div>
+    </div>
+  </div>
+  <div class="header-badge">EC · DIGIT · 2025</div>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>Cloud Sovereignty<br/>Assessment Tool</h1>
+    <p>Evaluate any cloud provider against the European Commission's Cloud Sovereignty Framework — scoring all 8 objectives and computing a weighted sovereignty score.</p>
+
+    <div class="search-wrap">
+      <input type="text" id="vendor-input" placeholder="Enter a cloud vendor — e.g. AWS, OVHcloud, Azure..." onkeydown="if(event.key==='Enter') runAssessment()"/>
+      <button onclick="runAssessment()" id="run-btn">Assess ↗</button>
+    </div>
+
+    <div class="suggestions">
+      <span class="suggestion" onclick="suggest('OVHcloud')">OVHcloud</span>
+      <span class="suggestion" onclick="suggest('AWS')">AWS</span>
+      <span class="suggestion" onclick="suggest('Microsoft Azure')">Azure</span>
+      <span class="suggestion" onclick="suggest('Google Cloud')">Google Cloud</span>
+      <span class="suggestion" onclick="suggest('Scaleway')">Scaleway</span>
+      <span class="suggestion" onclick="suggest('Hetzner')">Hetzner</span>
+    </div>
+
+    <div class="disclaimer">
+      AI-generated assessment based on publicly known information. Not an official EU evaluation. Scores are indicative estimates derived from the EC Cloud Sovereignty Framework (Oct. 2025).
+    </div>
+  </div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="loading-label">Running sovereignty assessment...</div>
+    <div class="loading-steps">
+      <div class="loading-step active" id="ls1">→ Researching vendor profile</div>
+      <div class="loading-step" id="ls2">→ Scoring 8 sovereignty objectives</div>
+      <div class="loading-step" id="ls3">→ Assigning SEAL levels · Computing weighted score</div>
+    </div>
+  </div>
+
+  <div id="error-box"></div>
+
+  <div id="results">
+    <div class="vendor-header">
+      <div>
+        <div class="vendor-name" id="r-vendor"></div>
+        <div class="vendor-sub">EU Cloud Sovereignty Assessment · Framework v1.2.1</div>
+      </div>
+      <div class="eligible-badge" id="r-eligible-badge"></div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">Sovereignty score</div>
+        <div class="metric-val" id="r-score"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Average SEAL</div>
+        <div class="metric-val" id="r-avg-seal"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Lowest SEAL</div>
+        <div class="metric-val" id="r-min-seal"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">EU min. threshold</div>
+        <div class="metric-val" style="color:var(--muted); font-size:20px;">SEAL-2</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span style="min-width:44px;">ID</span>
+        <span style="flex:1;">Objective</span>
+        <span style="min-width:52px;">Weight</span>
+        <span style="min-width:80px;">SEAL level</span>
+        <span style="flex:1;">Score</span>
+        <span style="min-width:36px; text-align:right;">%</span>
+      </div>
+      <div id="sov-rows"></div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-label">Assessment summary</div>
+      <div class="summary-text" id="r-summary"></div>
+    </div>
+
+    <button class="reset-btn" onclick="resetUI()">← Assess another vendor</button>
+
+    <footer>
+      Based on the European Commission Cloud Sovereignty Framework v1.2.1, Oct. 2025.<br/>
+      Powered by Claude (Anthropic). Scores are AI-generated estimates — not official EU procurement decisions.
+    </footer>
+  </div>
+</main>
+
+<script>
+const SOVS = [
+  { id:'SOV-1', name:'Strategic sovereignty',        weight:15 },
+  { id:'SOV-2', name:'Legal & jurisdictional',       weight:10 },
+  { id:'SOV-3', name:'Data & AI sovereignty',        weight:10 },
+  { id:'SOV-4', name:'Operational sovereignty',      weight:15 },
+  { id:'SOV-5', name:'Supply chain sovereignty',     weight:20 },
+  { id:'SOV-6', name:'Technology sovereignty',       weight:15 },
+  { id:'SOV-7', name:'Security & compliance',        weight:10 },
+  { id:'SOV-8', name:'Environmental sustainability', weight:5  },
+];
+const SEAL_LABELS = ['No sovereignty','Jurisdictional','Data sovereignty','Digital resilience','Full sovereignty'];
+const SEAL_COLORS = ['var(--seal0)','var(--seal1)','var(--seal2)','var(--seal3)','var(--seal4)'];
+const SEAL_BGS    = ['var(--seal0-bg)','var(--seal1-bg)','var(--seal2-bg)','var(--seal3-bg)','var(--seal4-bg)'];
+
+function suggest(name) {
+  document.getElementById('vendor-input').value = name;
+  runAssessment();
+}
+
+let loadingTimer;
+function animateLoadingSteps() {
+  let step = 0;
+  const steps = document.querySelectorAll('.loading-step');
+  steps.forEach(s => s.classList.remove('active'));
+  steps[0].classList.add('active');
+  loadingTimer = setInterval(() => {
+    step = (step + 1) % steps.length;
+    steps.forEach(s => s.classList.remove('active'));
+    steps[step].classList.add('active');
+  }, 1400);
+}
+
+async function runAssessment() {
+  const vendor = document.getElementById('vendor-input').value.trim();
+  if (!vendor) return;
+
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('error-box').style.display = 'none';
+  document.getElementById('run-btn').disabled = true;
+  animateLoadingSteps();
+
+  try {
+    const res = await fetch('/api/assess', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vendor })
+    });
+    const result = await res.json();
+    if (result.error) throw new Error(result.error);
+    renderResults(result);
+  } catch(e) {
+    document.getElementById('error-box').style.display = 'block';
+    document.getElementById('error-box').textContent = 'Assessment failed: ' + (e.message || 'unknown error');
+  } finally {
+    clearInterval(loadingTimer);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('run-btn').disabled = false;
+  }
+}
+
+function renderResults(r) {
+  const sovMap = {};
+  r.sovs.forEach(s => sovMap[s.id] = s);
+
+  let weighted = 0, minSeal = 4, sealSum = 0;
+  SOVS.forEach(sov => {
+    const s = sovMap[sov.id];
+    weighted += (s.score / 100) * sov.weight;
+    if (s.seal < minSeal) minSeal = s.seal;
+    sealSum += s.seal;
+  });
+  const score = Math.round(weighted);
+  const eligible = minSeal >= 2;
+
+  document.getElementById('r-vendor').textContent = r.vendor || document.getElementById('vendor-input').value;
+  document.getElementById('r-eligible-badge').textContent = eligible ? 'EU eligible' : 'Not eligible';
+  document.getElementById('r-eligible-badge').className = 'eligible-badge ' + (eligible ? 'eligible-yes' : 'eligible-no');
+
+  const scoreEl = document.getElementById('r-score');
+  scoreEl.textContent = score + '%';
+  scoreEl.className = 'metric-val ' + (score >= 70 ? 'score-good' : score >= 45 ? 'score-mid' : 'score-low');
+
+  document.getElementById('r-avg-seal').textContent = (sealSum / 8).toFixed(1);
+  document.getElementById('r-min-seal').textContent = 'SEAL-' + minSeal;
+
+  const rowsEl = document.getElementById('sov-rows');
+  rowsEl.innerHTML = '';
+  SOVS.forEach(sov => {
+    const s = sovMap[sov.id] || { seal:0, score:0, reasoning:'No data.' };
+    const row = document.createElement('div');
+    row.className = 'sov-row';
+    row.innerHTML = `
+      <div class="sov-top">
+        <span class="sov-id">${sov.id}</span>
+        <span class="sov-name">${sov.name}</span>
+        <span class="sov-weight">${sov.weight}%</span>
+        <span class="seal-pill" style="background:${SEAL_BGS[s.seal]};color:${SEAL_COLORS[s.seal]};border:1px solid ${SEAL_COLORS[s.seal]}40;">SEAL-${s.seal} · ${SEAL_LABELS[s.seal]}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:0%;background:${SEAL_COLORS[s.seal]};" data-width="${s.score}%"></div></div>
+        <span class="sov-pct">${s.score}%</span>
+      </div>
+      <div class="sov-reasoning">${s.reasoning}</div>
+    `;
+    rowsEl.appendChild(row);
+  });
+
+  document.getElementById('r-summary').textContent = r.summary;
+  document.getElementById('results').style.display = 'block';
+  document.querySelector('.hero').style.display = 'none';
+
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      document.querySelectorAll('.bar-fill').forEach(b => { b.style.width = b.dataset.width; });
+    }, 100);
+  });
+}
+
+function resetUI() {
+  document.getElementById('results').style.display = 'none';
+  document.querySelector('.hero').style.display = 'block';
+  document.getElementById('vendor-input').value = '';
+  document.getElementById('vendor-input').focus();
+}
+</script>
+</body>
+</html>
 
